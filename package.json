@@ -1,0 +1,12 @@
+{
+  "name": "lockstep-life-rpg",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Lockstep — a mobile-first personal life RPG with a ranked ladder. Plain HTML/CSS/JS, no build step.",
+  "type": "module",
+  "scripts": {
+    "start": "python -m http.server 5173",
+    "test": "node --test",
+    "icons": "node tools/make-icons.mjs"
+  }
+}

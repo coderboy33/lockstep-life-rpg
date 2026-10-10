@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Lockstep — Life RPG</title>
+    <meta name="description" content="Turn your real life into a ranked progression system: quests, streaks, XP and a competitive ladder." />
+    <meta name="theme-color" content="#05051a" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Lockstep" />
+    <meta name="format-detection" content="telephone=no" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" type="image/svg+xml" href="./assets/icons/favicon.svg" />
+    <link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="./css/base.css" />
+    <link rel="stylesheet" href="./css/components.css" />
+    <link rel="stylesheet" href="./css/screens.css" />
+  </head>
+  <body>
+    <div class="stars" id="stars" aria-hidden="true"></div>
+    <div id="app">
+      <main class="view" id="view" tabindex="-1">
+        <div class="boot">
+          <div class="boot-mark"></div>
+          <p class="muted">Loading…</p>
+        </div>
+      </main>
+      <nav class="tabbar hidden" id="tabbar" aria-label="Main"></nav>
+    </div>
+    <div id="overlay-root"></div>
+    <div id="toast-root"></div>
+    <noscript><p style="padding:24px">Lockstep needs JavaScript enabled.</p></noscript>
+    <script type="module" src="./js/main.js"></script>
+  </body>
+</html>

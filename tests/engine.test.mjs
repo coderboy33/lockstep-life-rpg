@@ -70,11 +70,13 @@ test('quest creation, completion, XP, and duplicate protection', () => {
   const r1 = completeQuest(s, qid, { now: T0 });
   assert.ok(r1.ok);
   assert.ok(r1.completion.xp > 0, 'XP awarded');
-  assert.equal(r1.completion.sr, 0, 'no SR during placement');
+  assert.equal(r1.completion.sr, 2, 'medium quest gives 2 SR, even during placement');
+  assert.equal(s.ranked.rating, 2, 'SR banked immediately');
   const xpAfter = s.xp.total;
   const r2 = completeQuest(s, qid, { now: T0 + 1000 });
   assert.equal(r2.ok, false, 'duplicate blocked');
   assert.equal(s.xp.total, xpAfter, 'no duplicate XP');
+  assert.equal(s.ranked.rating, 2, 'no duplicate SR');
   assert.equal(s.completions.length, 1);
 });
 
@@ -85,6 +87,7 @@ test('undo removes the exact rewards', () => {
   const undo = undoCompletion(s, r.completion.id, T0 + 5000);
   assert.ok(undo.ok);
   assert.equal(s.xp.total, 0);
+  assert.equal(s.ranked.rating, 0, 'SR removed too');
   assert.equal(s.completions.length, 0);
 });
 
@@ -131,7 +134,7 @@ test('SR anti-grind: new quests do not count, a day cannot farm unlimited SR', (
   const fresh = createQuest(s, { title: 'Brand new', category: 'growth', durationMin: 60, difficulty: 'epic' }, now);
   const r = completeQuest(s, fresh.quest.id, { now });
   assert.ok(r.completion.xp > 0, 'XP still awarded');
-  assert.equal(r.completion.sr, 0, 'no direct SR');
+  assert.equal(r.completion.sr, 4, 'epic quest gives 4 SR immediately');
   assert.equal(r.completion.match, 0, 'not part of the match today');
   // 20 extra epic quests, all done: the day's SR is bounded by the rank's max gain.
   addStandardQuests(s, now - 2 * DAY, 20, { difficulty: 'epic', durationMin: 60 });
@@ -159,7 +162,7 @@ test('self-reported quests are capped by length; required checks reduce credit',
   assert.equal(a.completion.eff, 0, 'epic 2-minute task counted as easy');
   const v = completeQuest(s, vid.id, { now });
   assert.equal(v.completion.credit, 0.5, 'half match credit without evidence');
-  assert.equal(v.completion.sr, 0, 'no verification bonus');
+  assert.equal(v.completion.sr, 1, 'half quest SR without evidence, no verification bonus');
   const t = completeQuest(s, timed.id, { now });
   assert.equal(t.completion.credit, 0.75);
   assert.ok(t.completion.lines.some((l) => l.includes('Timer not used')));
@@ -299,4 +302,42 @@ test('corrupted data is repaired, not crashed on', () => {
   assert.throws(() => migrate({ schemaVersion: 99 }, T0));
   const n = normalize(JSON.parse(JSON.stringify(freshState())), T0);
   assert.equal(n.onboarded, true);
+});
+
+test('XP-only quests now also award SR immediately, without double-counting ranked quests', () => {
+  const s = freshState();
+  const [qid] = addStandardQuests(s, T0, 8);
+  const weekly = createQuest(s, { title: 'Backtest', category: 'trading', type: 'weekly', target: 1, durationMin: 45, difficulty: 'hard' }, T0).quest;
+  let now = simulate(s, T0 + DAY, 7, 1);
+  assert.equal(s.ranked.placed, true);
+  const banked = s.ranked.placement.result.questSr;
+  assert.ok(banked > 0, 'quest SR earned during placement was kept');
+  assert.equal(s.ranked.rating, s.ranked.placement.result.rating + banked);
+  now += 3 * DAY;
+  runSettlement(s, now);
+  // Daily (previously XP-only) quest: XP and SR at once, rating moves immediately.
+  const before = s.ranked.rating;
+  const xp0 = s.xp.total;
+  const r = completeQuest(s, qid, { now });
+  assert.ok(r.completion.xp > 0 && r.completion.sr === 2, 'daily medium quest: XP + 2 SR');
+  assert.equal(s.ranked.rating, before + 2);
+  assert.equal(s.xp.total, xp0 + r.completion.xp);
+  // Repeating it is blocked: no extra XP or SR.
+  assert.equal(completeQuest(s, qid, { now: now + 1000 }).ok, false);
+  assert.equal(s.ranked.rating, before + 2);
+  // Weekly target already gives its own SR: it does NOT also get quest SR.
+  const w = completeQuest(s, weekly.id, { now });
+  assert.equal(w.completion.sr, 6, 'weekly target keeps its existing SR (3 × 2), not doubled');
+  assert.equal(w.completion.questSr, 0);
+});
+
+test('quest SR has a daily cap so new quests cannot farm it', () => {
+  const s = freshState();
+  const now = T0 + 2 * DAY;
+  let total = 0;
+  for (let i = 0; i < 30; i++) {
+    const q = createQuest(s, { title: 'Spam ' + i, category: 'growth', durationMin: 60, difficulty: 'epic' }, now).quest;
+    total += completeQuest(s, q.id, { now }).completion.questSr;
+  }
+  assert.equal(total, 40, 'capped at 40 quest SR per day');
 });

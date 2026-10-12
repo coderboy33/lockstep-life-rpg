@@ -259,19 +259,19 @@ export function computeAward(state, q, ctx) {
   let sr = 0;
   let srNote = null;
   const ageDays = q.createdDay ? diffDays(q.createdDay, ctx.day) : 0;
-  if (!r.placed) srNote = 'Placement in progress — today’s results are being recorded.';
+  if (!r.placed) srNote = 'Placement in progress — SR you earn now is added to your placement result.';
   else {
     if (q.type === 'daily') {
       if (isDueOn(q, ctx.day)) {
         if (!ctx.backfill) match = matchImpact(state, ctx.day, effWeight(q, cfg) * credit);
       } else if (ageDays < 1) srNote = 'New quests join your ranked match tomorrow.';
-      else srNote = 'Off-schedule completion — XP only.';
+      else srNote = 'Off-schedule — not part of today’s ranked match.';
     } else if (q.type === 'goal' && ageDays < cfg.goalMinAgeDays) {
       direct = 0;
       srNote = `Goals need to be ${cfg.goalMinAgeDays}+ days old to earn SR.`;
     } else if (q.type !== 'goal' && ageDays < 1) {
       direct = 0;
-      srNote = 'New quests start earning SR tomorrow.';
+      srNote = 'One-time / weekly bonus SR starts tomorrow for new quests.';
     }
     if (missingVideo) direct = 0;
     if (ctx.verified && !missingVideo) direct += cfg.verifiedBonusSr;
@@ -286,7 +286,16 @@ export function computeAward(state, q, ctx) {
     }
     sr = Math.max(0, Math.round(direct));
   }
-  return { xp, sr, match, credit, eff, lines, srNote };
+  // Every completion that doesn't already earn one-time / weekly-target / goal SR gets quest SR now.
+  const hasTypeSr = r.placed && !missingVideo && (q.type === 'goal' ? ageDays >= cfg.goalMinAgeDays : (q.type === 'once' || (q.type === 'weekly' && ctx.final)) && ageDays >= 1);
+  let questSr = 0;
+  if (!hasTypeSr) {
+    const used = sum(state.completions.filter((c) => c.day === ctx.day), (c) => c.questSr || 0);
+    questSr = Math.min(Math.max(0, cfg.questSrDailyCap - used), Math.max(1, Math.round(cfg.questSr[eff] * credit)));
+    if (questSr > 0) sr += questSr;
+    else lines.push(`Daily quest-SR cap (${cfg.questSrDailyCap}) reached`);
+  }
+  return { xp, sr, questSr, match, credit, eff, lines, srNote };
 }
 
 function addXp(state, amount, cat, day) {
@@ -371,6 +380,7 @@ export function completeQuest(state, qid, opts = {}) {
     note: cleanText(opts.note, 300),
     lines: award.lines,
     srNote: award.srNote,
+    questSr: award.questSr || 0,
   };
   if (q.type === 'weekly') {
     c.step = chk.step;

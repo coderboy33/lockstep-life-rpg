@@ -554,7 +554,7 @@ export function openQuestDetail(qid) {
         !doneToday
           ? h(
               'div.reward-box',
-              h('div.row.gap-12', h('div', h('div.rb-val.num', `+${prev.xp}`), h('div.rb-lab', 'XP')), prev.match ? h('div', h('div.rb-val.num.blue', `↑${prev.match}`), h('div.rb-lab', 'Match SR')) : null, prev.sr ? h('div', h('div.rb-val.num.green', `+${prev.sr}`), h('div.rb-lab', 'Bonus SR')) : null),
+              h('div.row.gap-12', h('div', h('div.rb-val.num', `+${prev.xp}`), h('div.rb-lab', 'XP')), prev.match ? h('div', h('div.rb-val.num.blue', `↑${prev.match}`), h('div.rb-lab', 'Match SR')) : null, prev.sr ? h('div', h('div.rb-val.num.green', `+${prev.sr}`), h('div.rb-lab', 'SR')) : null),
               prev.srNote ? h('div.tiny.faint.mt-8', prev.srNote) : null,
               prev.lines.length ? h('div.tiny.faint.mt-4', prev.lines.join(' · ')) : null,
               !prev.allowed && prev.reason ? h('div.tiny.orange.mt-4', prev.reason) : null

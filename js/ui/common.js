@@ -6,7 +6,7 @@ import { catOf, rankedConfig, DIFFICULTIES } from '../core/config.js';
 import { fmtNum, signed, fmtDuration } from '../core/util.js';
 import { weekKey, weekDays, parseKey, WD_LETTER, weekday, fmtTime, addDays } from '../core/dates.js';
 import { currentTier, rankProgress, matchProjection, matchImpact } from '../engine/ranked.js';
-import { streakAsOf, dayResult, computeDay, effWeight } from '../engine/schedule.js';
+import { streakAsOf, dayResult, computeDay, effWeight, effDiffIndex } from '../engine/schedule.js';
 import { levelInfo, currentTitle } from '../engine/progress.js';
 
 export function topbar(title, opts = {}) {
@@ -47,7 +47,7 @@ export function rankHero(state, today, opts = {}) {
   let subLine;
   if (prog.placement) {
     titleLine = h('div.hero-tier', 'PLACEMENT');
-    subLine = h('div.hero-sub', `${prog.done}/${prog.total} ranked days played`);
+    subLine = h('div.hero-sub', `${prog.done}/${prog.total} ranked days played${state.ranked.rating ? ` · ${fmtNum(state.ranked.rating)} SR` : ''}`);
   } else {
     titleLine = h('div.hero-tier', { style: { color } }, tier.name.toUpperCase());
     subLine = h('div.hero-sub.num', `${fmtNum(state.ranked.rating)} SR`);
@@ -136,8 +136,8 @@ export function questRow(state, item, today, handlers = {}) {
   if (item.completion) reward = h('span.qr-reward.done', `+${item.completion.xp} XP${item.completion.sr ? ` · +${item.completion.sr} SR` : ''}`);
   else if (state.ranked.placed && q.type === 'daily' && item.due) {
     const imp = matchImpact(state, today, effWeight(q, cfg));
-    reward = h('span.qr-reward', `+${cfg.xpBase[Math.max(0, xp)]} XP${imp ? ` · ↑${imp} SR` : ''}`);
-  } else reward = h('span.qr-reward', `+${cfg.xpBase[Math.max(0, xp)]} XP`);
+    reward = h('span.qr-reward', `+${cfg.xpBase[Math.max(0, xp)]} XP · +${cfg.questSr[effDiffIndex(q, cfg)]} SR${imp ? ` · ↑${imp} match` : ''}`);
+  } else reward = h('span.qr-reward', `+${cfg.xpBase[Math.max(0, xp)]} XP · +${cfg.questSr[effDiffIndex(q, cfg)]} SR`);
   return h(
     'div.qrow' + (todayDone ? '.is-done' : ''),
     { style: { '--c': cat.color } },

@@ -132,7 +132,13 @@ export function lockedPromotion(state, day) {
 /** Adds SR (clamped at 0 and at any locked-promotion cap). Returns the amount actually applied. */
 export function applyRating(state, delta, day, today = day) {
   const r = state.ranked;
-  if (!r.placed || !delta) return 0;
+  if (!delta) return 0;
+  if (!r.placed) {
+    // During placement, quest SR banks up and is added to the placement result.
+    const b0 = r.rating || 0;
+    r.rating = Math.max(0, Math.round(b0 + delta));
+    return r.rating - b0;
+  }
   const before = r.rating;
   let after = Math.max(0, before + delta);
   if (delta > 0) after = Math.min(after, Math.max(before, ratingCap(state, day, today)));
@@ -336,14 +342,16 @@ function finishPlacement(state, day, now, events) {
   const r = state.ranked;
   const tiers = tiersOf(state);
   const b = placementBreakdown(state, day);
+  const earned = r.rating || 0; // quest SR banked during placement
+  b.questSr = earned;
   r.placed = true;
-  r.rating = b.rating;
-  r.peakRating = Math.max(r.peakRating, b.rating);
+  r.rating = b.rating + earned;
+  r.peakRating = Math.max(r.peakRating, r.rating);
   r.placement.result = b;
   r.placement.endDay = day;
   r.tier = 0;
   // Walk up from Bronze I, respecting promotion requirements.
-  const target = tierForRating(tiers, b.rating);
+  const target = tierForRating(tiers, r.rating);
   let best = 1;
   for (let t = 2; t <= target; t++) {
     if (requirementStatus(state, t, day).ok) best = t;

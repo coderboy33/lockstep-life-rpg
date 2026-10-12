@@ -81,6 +81,10 @@ export const DEFAULT_RANKED = {
   // Direct SR (outside the daily match) for one-time challenges and weekly targets.
   srBase: [1, 2, 3, 4],
   directSrCap: 12, // max direct SR per day (goals excluded)
+  // Immediate SR for every completion that doesn't already earn one-time / weekly-target / goal SR,
+  // by effective difficulty [easy, medium, hard, epic]. Capped per day so it can't be farmed.
+  questSr: [1, 2, 3, 4],
+  questSrDailyCap: 40,
   // A self-reported (unverified) quest can't be rated harder than its length allows:
   // under 5 min → max Easy, under 20 → Medium, under 45 → Hard, otherwise Epic.
   durationCaps: [5, 20, 45],

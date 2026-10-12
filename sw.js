@@ -1,6 +1,6 @@
 // Service worker: makes Lockstep load instantly and work offline.
 // Bump VERSION whenever you change files so phones pick up the update.
-const VERSION = 'lockstep-v1.0.0';
+const VERSION = 'lockstep-v1.0.1';
 
 const PRECACHE = [
   './',

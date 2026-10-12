@@ -31,7 +31,7 @@ export function render(ctx) {
       h(
         'div.grow',
         h('div.card-title', { style: { color } }, prog.placement ? 'Unranked — placement' : tier.name),
-        h('div.small.muted.num', prog.placement ? `${prog.done}/${prog.total} placement days` : `${fmtNum(s.ranked.rating)} SR${prog.next ? ` · ${fmtNum(prog.need)} to ${prog.next.name}` : ''}`),
+        h('div.small.muted.num', prog.placement ? `${prog.done}/${prog.total} placement days${s.ranked.rating ? ` · ${fmtNum(s.ranked.rating)} SR` : ''}` : `${fmtNum(s.ranked.rating)} SR${prog.next ? ` · ${fmtNum(prog.need)} to ${prog.next.name}` : ''}`),
         h('div.mt-8', progressBar(prog.pct, { color, glow: true }))
       )
     ),
